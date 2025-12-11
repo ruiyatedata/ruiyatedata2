@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CipherLab - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            background: #16213e;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        h1 {
+            margin-top: 0;
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #2a3d66;
+            border-radius: 8px;
+            background: #0f3460;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+        
+        input::placeholder {
+            color: #888;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #e94560 0%, #d63447 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #loginMessage {
+            margin-top: 15px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        
+        .success {
+            color: #4CAF50;
+        }
+        
+        .error {
+            color: #f44336;
+        }
+        
+        .loading {
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🔐 CipherLab</h1>
+        <div class="subtitle">Advanced Cryptographic Analysis Platform</div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="password">请输入访问密码：</label>
+                <input type="password" id="password" placeholder="输入密码" required>
+            </div>
+            
+            <button type="submit" id="loginBtn">登录验证</button>
+        </form>
+        
+        <div id="loginMessage"></div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #2a3d66; font-size: 12px; color: #666;">
+            <div>© 2024 CipherLab Security Division</div>
+            <div style="margin-top: 5px;">Protected Access System v2.1</div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const messageDiv = document.getElementById('loginMessage');
+            
+            // 清空消息
+            messageDiv.innerHTML = '';
+            messageDiv.className = '';
+            
+            // 验证输入
+            if (!password) {
+                messageDiv.innerHTML = '请输入密码';
+                messageDiv.className = 'error';
+                return;
+            }
+            
+            // 显示加载状态
+            loginBtn.disabled = true;
+            loginBtn.textContent = '验证中...';
+            messageDiv.innerHTML = '正在验证身份...';
+            messageDiv.className = 'loading';
+            
+            try {
+                // 调用后台验证密码
+                const response = await fetch('/.netlify/functions/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.innerHTML = '验证成功！正在跳转...';
+                    messageDiv.className = 'success';
+                    
+                    // 存储登录状态（简单版本，实际项目建议用HttpOnly Cookie）
+                    localStorage.setItem('cipherlab_logged_in', 'true');
+                    
+                    // 跳转到解密页面
+                    setTimeout(() => {
+                        window.location.href = 'decoder.html';
+                    }, 1000);
+                    
+                } else {
+                    messageDiv.innerHTML = data.message || '密码错误';
+                    messageDiv.className = 'error';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '登录验证';
+                }
+                
+            } catch (error) {
+                messageDiv.innerHTML = '网络错误，请重试';
+                messageDiv.className = 'error';
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录验证';
+            }
+        });
+        
+        // 检查是否已经登录（防止直接访问decoder.html）
+        if (localStorage.getItem('cipherlab_logged_in') === 'true') {
+            // 可以在这里添加额外的验证逻辑
+            console.log('用户已登录');
+        }
+    </script>
+</body>
+</html>
